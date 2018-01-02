@@ -16,7 +16,7 @@ using namespace std::chrono_literals;
 constexpr auto width = 600;
 constexpr auto height = 300;
 constexpr int max_height = 500;
-constexpr std::size_t size = 50;
+constexpr std::size_t size = 20;
 
 sdl_module sdl("sdl_module", width, height);
 
@@ -80,7 +80,6 @@ lerp(T v0, T v1, double t) {
 template<typename T>
 void
 swap(T &a, T &b, std::size_t a_index, std::size_t b_index) {
-    
     T c = a;
     a = b;
     b = c;
@@ -88,11 +87,7 @@ swap(T &a, T &b, std::size_t a_index, std::size_t b_index) {
     update_list.push_back(a_index);
     update_list.push_back(b_index);
     
-    double t = 0;
-    
     while (update_list.size() > 0) {
-   
-        
         for (int i = 0; i < update_list.size(); i++) {
             if (array[update_list[i]].render < array[update_list[i]].actual) {
                 array[update_list[i]].render++;
@@ -145,6 +140,20 @@ swap(T &a, T &b, std::size_t a_index, std::size_t b_index) {
         
         
         SDL_RenderPresent(sdl.m_renderer);
+    }
+}
+//----------------------
+template<std::size_t size>
+void
+insertionSort(std::array<value<int>, size> &array) {
+    for (int i = 0; i < size; i++) {
+        auto temp = array[i].actual;
+        int j = i;
+        
+        while (temp < array[j - 1].actual && j > 0) {
+            swap(array[j].actual, array[j - 1].actual, j, j - 1);
+            j--;
+        }
     }
 }
 
@@ -202,39 +211,124 @@ bubble_sort(std::array<value<int>, size> &array) {
     }
 }
 
+//----------------------
+void
+rand_morph() {
+    // set all to the same value
+    for (int i = 0; i < size; i++) {
+        array[i].actual = (rand() % max_height);
+        update_list.push_back(i);
+    }
+    
+    while (update_list.size() > 0) {
+        for (int i = 0; i < update_list.size(); i++) {
+            if (array[update_list[i]].render < array[update_list[i]].actual) {
+                array[update_list[i]].render++;
+            } else if (array[update_list[i]].render > array[update_list[i]].actual) {
+                array[update_list[i]].render--;
+            } else {
+                update_list.erase(update_list.begin() + i);
+            }
+        }
+        
+        std::cout << "working\n";
+        SDL_SetRenderDrawColor(sdl.m_renderer, 33, 4, 61, 255);
+        SDL_RenderClear(sdl.m_renderer);
+        
+        SDL_Rect rect;
+        rect.y = sdl.m_renderer_height;
+        rect.w = sdl.m_renderer_width / size;
+        
+        
+        // render
+        for (int i = 0; i < size; i++) {
+            rect.x = i * rect.w;
+            rect.h = -array[i].render;
+            
+            
+            unsigned int red = map((unsigned int)rect.h, (unsigned int)0, (unsigned int)sdl.m_renderer_height, (unsigned int)100, (unsigned int)255);
+            unsigned int blue = map((unsigned int)i, (unsigned int)0, (unsigned int)size, (unsigned int)100, (unsigned int)255);
+            SDL_SetRenderDrawColor(sdl.m_renderer, red, 0, blue, 255);
+            SDL_RenderFillRect(sdl.m_renderer, &rect);
+        }
+        std::this_thread::sleep_for(10ms);
+        SDL_RenderPresent(sdl.m_renderer);
+    }
+    std::this_thread::sleep_for(2s);
+}
+
+//----------------------
 int
 main() {
     std::cout << "hello sailor!\n";
     
-    fill_array_with_rand(array);
     
     std::cout << " requeted res: " << width << " x " << height << '\n';
     std::cout << "renderer res: " << sdl.m_renderer_width << " x " << sdl.m_renderer_height << '\n';
     
-    SDL_SetRenderDrawColor(sdl.m_renderer, 0, 0, 0, 255);
+
+    SDL_SetRenderDrawColor(sdl.m_renderer, 33, 4, 61, 255);
     SDL_RenderClear(sdl.m_renderer);
+    SDL_RenderPresent(sdl.m_renderer);
+    std::this_thread::sleep_for(15s);
+    
     
     SDL_Rect rect;
     rect.y = sdl.m_renderer_height;
     rect.w = sdl.m_renderer_width / size;
     
-    
-    // render
+    // set all to the same value
     for (int i = 0; i < size; i++) {
-        rect.x = i * rect.w;
-        rect.h = -array[i].render;
-        
-        
-        unsigned int red = map((unsigned int)rect.h, (unsigned int)0, (unsigned int)sdl.m_renderer_height, (unsigned int)100, (unsigned int)255);
-        unsigned int blue = map((unsigned int)i, (unsigned int)0, (unsigned int)size, (unsigned int)100, (unsigned int)255);
-        SDL_SetRenderDrawColor(sdl.m_renderer, red, 0, blue, 255);
-        SDL_RenderFillRect(sdl.m_renderer, &rect);
+        array[i].actual = (rand() % max_height);
+        update_list.push_back(i);
     }
     
-    SDL_RenderPresent(sdl.m_renderer);
+    // set render to a random value
+    for (int i = 0; i < size; i++) {
+        array[i].render = 0;
+    }
     
+    while (update_list.size() > 0) {
+        for (int i = 0; i < update_list.size(); i++) {
+            if (array[update_list[i]].render < array[update_list[i]].actual) {
+                array[update_list[i]].render++;
+            } else if (array[update_list[i]].render > array[update_list[i]].actual) {
+                array[update_list[i]].render--;
+            } else {
+                update_list.erase(update_list.begin() + i);
+            }
+        }
+        
+        std::cout << "working\n";
+        SDL_SetRenderDrawColor(sdl.m_renderer, 33, 4, 61, 255);
+        SDL_RenderClear(sdl.m_renderer);
+        
+        SDL_Rect rect;
+        rect.y = sdl.m_renderer_height;
+        rect.w = sdl.m_renderer_width / size;
+        
+    
+        // render
+        for (int i = 0; i < size; i++) {
+            rect.x = i * rect.w;
+            rect.h = -array[i].render;
+            
+            
+            unsigned int red = map((unsigned int)rect.h, (unsigned int)0, (unsigned int)sdl.m_renderer_height, (unsigned int)100, (unsigned int)255);
+            unsigned int blue = map((unsigned int)i, (unsigned int)0, (unsigned int)size, (unsigned int)100, (unsigned int)255);
+            SDL_SetRenderDrawColor(sdl.m_renderer, red, 0, blue, 255);
+            SDL_RenderFillRect(sdl.m_renderer, &rect);
+        }
+        std::this_thread::sleep_for(10ms);
+        SDL_RenderPresent(sdl.m_renderer);
+    }
+    
+    std::this_thread::sleep_for(2s);
+    insertionSort(array);
+    rand_morph();
     selection_sort(array);
-    fill_array_with_rand(array);
+    rand_morph();
     bubble_sort(array);
-    return 0;
+   
+   return 0;
 }
