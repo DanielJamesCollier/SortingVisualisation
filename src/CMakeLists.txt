@@ -1,0 +1,8 @@
+set (HEADERFILES 
+    ${CMAKE_CURRENT_SOURCE_DIR}/sdl_module.hpp
+    PARENT_SCOPE)
+
+set (SOURCEFILES 
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/sdl_module.cpp
+    PARENT_SCOPE)
