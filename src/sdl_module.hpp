@@ -17,7 +17,6 @@ public:
 //                         RAII                             // 
 //------------------------------------------------------------
     sdl_module(std::string title, int dpi_unscaled_width, int dpi_unscaled_height) noexcept(false);
-    sdl_module(std::string title, int x, int y,  int dpi_unscaled_width, int dpi_unscaled_height) noexcept(false);
     ~sdl_module();
     
 //                       functions                         // 
@@ -29,8 +28,6 @@ public:
     std::string m_title;
     int m_x;
     int m_y;
-    int m_dpi_scaled_width;
-    int m_dpi_scaled_height;
     int m_renderer_width;
     int m_renderer_height;
 

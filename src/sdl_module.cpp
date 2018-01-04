@@ -7,12 +7,10 @@
 
 //                         RAII                             // 
 //------------------------------------------------------------
-sdl_module::sdl_module(std::string title, int dpi_unscaled_width, int dpi_unscaled_height) noexcept(false) 
+sdl_module::sdl_module(std::string title, int dpi_unscaled_width, int dpi_unscaled_height) noexcept(false)
 :   m_title{std::move(title)}
 ,   m_x{SDL_WINDOWPOS_CENTERED}
-,   m_y{SDL_WINDOWPOS_CENTERED}
-,   m_dpi_scaled_width{}
-,   m_dpi_scaled_height{} {
+,   m_y{SDL_WINDOWPOS_CENTERED} {
     
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         throw sdl_module_exception(SDL_GetError());
@@ -22,50 +20,9 @@ sdl_module::sdl_module(std::string title, int dpi_unscaled_width, int dpi_unscal
 
     get_display_dpi(0, &dpi, &default_dpi);
 
-    m_dpi_scaled_width = static_cast<int>(dpi_unscaled_width * dpi / default_dpi);
-    m_dpi_scaled_height = static_cast<int>(dpi_unscaled_height * dpi / default_dpi);
-
     Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
 
-    if ((m_window = SDL_CreateWindow(m_title.c_str(), m_x, m_y, m_dpi_scaled_width, m_dpi_scaled_height, flags)) == nullptr) {
-        throw sdl_module_exception(std::string(SDL_GetError()));
-    }
-
-    if ((m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED)) == nullptr) {
-        throw sdl_module_exception(std::string(SDL_GetError()));
-    }
-
-    if (SDL_GetRendererOutputSize(m_renderer, &m_renderer_width, &m_renderer_height) < 0) {
-        throw sdl_module_exception(std::string(SDL_GetError()));
-    }
-    
-    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
-    SDL_RenderClear(m_renderer);
-    SDL_RenderPresent(m_renderer);
-}
-
-//------------------------------------------------------------
-sdl_module::sdl_module(std::string title, int x, int y, int dpi_unscaled_width, int dpi_unscaled_height) noexcept(false) 
-:   m_title{std::move(title)}
-,   m_x{x}
-,   m_y{y}
-,   m_dpi_scaled_width{}
-,   m_dpi_scaled_height{} {
-    
-    if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-        throw sdl_module_exception(SDL_GetError());
-    }
-        
-    float dpi, default_dpi;
-
-    get_display_dpi(0, &dpi, &default_dpi);
-
-    m_dpi_scaled_width = static_cast<int>(dpi_unscaled_width * dpi / default_dpi);
-    m_dpi_scaled_height = static_cast<int>(dpi_unscaled_height * dpi / default_dpi);
-
-    Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
-
-    if ((m_window = SDL_CreateWindow(title.c_str(), m_x, m_y, m_dpi_scaled_width, m_dpi_scaled_height, flags)) == nullptr) {
+    if ((m_window = SDL_CreateWindow(m_title.c_str(), m_x, m_y, dpi_unscaled_width, dpi_unscaled_height, flags)) == nullptr) {
         throw sdl_module_exception(std::string(SDL_GetError()));
     }
 

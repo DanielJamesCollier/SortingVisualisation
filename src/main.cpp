@@ -13,10 +13,9 @@
 
 using namespace std::chrono_literals;
 
-constexpr auto width = 600;
-constexpr auto height = 300;
-constexpr int max_height = 500;
-constexpr std::size_t size = 20;
+constexpr auto width = 1000;
+constexpr auto height = 600;
+constexpr std::size_t size = 100;
 
 sdl_module sdl("sdl_module", width, height);
 
@@ -26,7 +25,7 @@ std::vector<std::size_t> update_list;
 template<typename T>
 struct value {
     value()
-    : percent{1.0}
+    : last{0}
     , actual{0}
     , render{0}
     {
@@ -34,13 +33,13 @@ struct value {
     }
     
     value(T value)
-    : percent{1.0}
+    : last{(double)value}
     , actual{(double)value}
     , render{(double)value}
     {
         // empty
     }
-    double percent;
+    double last;
     double actual;
     double render;
 };
@@ -87,16 +86,23 @@ swap(T &a, T &b, std::size_t a_index, std::size_t b_index) {
     update_list.push_back(a_index);
     update_list.push_back(b_index);
     
+    array[a_index].last = array[a_index].render;
+    array[b_index].last = array[b_index].render;
+    
+    double j = 0;
+    
     while (update_list.size() > 0) {
+        j += 0.02;
+        
         for (int i = 0; i < update_list.size(); i++) {
-            if (array[update_list[i]].render < array[update_list[i]].actual) {
-                array[update_list[i]].render++;
-            } else if (array[update_list[i]].render > array[update_list[i]].actual) {
-                array[update_list[i]].render--;
-            } else {
-                update_list.erase(update_list.begin() + i);
-            }
-        }
+          if (array[update_list[i]].render != array[update_list[i]].actual) {
+              array[update_list[i]].render = lerp(array[update_list[i]].last, array[update_list[i]].actual, clamp(j, 0.0, 1.0));
+          } else {
+              update_list.erase(update_list.begin() + i);
+              array[update_list[i]].last = array[update_list[i]].actual;
+          }
+      }
+
         
     
         SDL_SetRenderDrawColor(sdl.m_renderer, 33, 4, 61, 255);
@@ -104,7 +110,7 @@ swap(T &a, T &b, std::size_t a_index, std::size_t b_index) {
         
         SDL_Rect rect;
         rect.y = sdl.m_renderer_height;
-        rect.w = sdl.m_renderer_width / size;
+        rect.w = (float)sdl.m_renderer_width / (float)size;
         
        
         
@@ -181,7 +187,7 @@ template<std::size_t size>
 void
 fill_array_with_rand(std::array<value<int>, size> &array) {
     for (auto &i : array) {
-        i = value<int>(rand() % max_height);
+        i = value<int>(rand() % height);
     }
 }
 
@@ -216,22 +222,24 @@ void
 rand_morph() {
     // set all to the same value
     for (int i = 0; i < size; i++) {
-        array[i].actual = (rand() % max_height);
+        array[i].actual = (rand() % height);
         update_list.push_back(i);
     }
     
+    double j = 0;
+    
     while (update_list.size() > 0) {
+        j += 0.01;
+    
         for (int i = 0; i < update_list.size(); i++) {
-            if (array[update_list[i]].render < array[update_list[i]].actual) {
-                array[update_list[i]].render++;
-            } else if (array[update_list[i]].render > array[update_list[i]].actual) {
-                array[update_list[i]].render--;
+            if (array[update_list[i]].render != array[update_list[i]].actual) {
+                array[update_list[i]].render = lerp(array[update_list[i]].last, array[update_list[i]].actual, clamp(j, 0.0, 1.0));
             } else {
                 update_list.erase(update_list.begin() + i);
+                array[update_list[i]].last = array[update_list[i]].actual;
             }
         }
         
-        std::cout << "working\n";
         SDL_SetRenderDrawColor(sdl.m_renderer, 33, 4, 61, 255);
         SDL_RenderClear(sdl.m_renderer);
         
@@ -265,12 +273,12 @@ main() {
     
     std::cout << " requeted res: " << width << " x " << height << '\n';
     std::cout << "renderer res: " << sdl.m_renderer_width << " x " << sdl.m_renderer_height << '\n';
-    
+
 
     SDL_SetRenderDrawColor(sdl.m_renderer, 33, 4, 61, 255);
     SDL_RenderClear(sdl.m_renderer);
     SDL_RenderPresent(sdl.m_renderer);
-    std::this_thread::sleep_for(15s);
+    std::this_thread::sleep_for(2s);
     
     
     SDL_Rect rect;
@@ -279,7 +287,7 @@ main() {
     
     // set all to the same value
     for (int i = 0; i < size; i++) {
-        array[i].actual = (rand() % max_height);
+        array[i].actual = (rand() % height);
         update_list.push_back(i);
     }
     
@@ -288,18 +296,21 @@ main() {
         array[i].render = 0;
     }
     
+    double j = 0;
+    
     while (update_list.size() > 0) {
+        j += 0.01;
+     
         for (int i = 0; i < update_list.size(); i++) {
-            if (array[update_list[i]].render < array[update_list[i]].actual) {
-                array[update_list[i]].render++;
-            } else if (array[update_list[i]].render > array[update_list[i]].actual) {
-                array[update_list[i]].render--;
+            if (array[update_list[i]].render != array[update_list[i]].actual) {
+                array[update_list[i]].render = lerp(array[update_list[i]].last, array[update_list[i]].actual, clamp(j, 0.0, 1.0));
             } else {
                 update_list.erase(update_list.begin() + i);
+                array[update_list[i]].last = array[update_list[i]].actual;
             }
         }
         
-        std::cout << "working\n";
+        
         SDL_SetRenderDrawColor(sdl.m_renderer, 33, 4, 61, 255);
         SDL_RenderClear(sdl.m_renderer);
         
