@@ -20,7 +20,7 @@ sdl_module::sdl_module(std::string title, int dpi_unscaled_width, int dpi_unscal
 
     get_display_dpi(0, &dpi, &default_dpi);
 
-    Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_FULLSCREEN_DESKTOP;
+    Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
 
     if ((m_window = SDL_CreateWindow(m_title.c_str(), m_x, m_y, dpi_unscaled_width, dpi_unscaled_height, flags)) == nullptr) {
         throw sdl_module_exception(std::string(SDL_GetError()));

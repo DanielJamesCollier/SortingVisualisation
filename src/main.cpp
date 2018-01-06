@@ -16,7 +16,7 @@ using namespace std::chrono_literals;
 
 constexpr auto width = 1000;
 constexpr auto height = 600;
-constexpr std::size_t size = 100;
+constexpr std::size_t size = 200;
 
 sdl_module sdl("sdl_module", width, height);
 
@@ -114,7 +114,7 @@ end_draw() {
 void
 draw_all_bars() {
     for (int i = 0; i < size; i++) {
-        rect.x = (i * rect.w) + 1;
+        rect.x = (i * rect.w) + 21;
         rect.h = -array[i].render;
         
         SDL_Rect temp = rect;
@@ -132,12 +132,23 @@ draw_all_bars() {
 
         SDL_SetRenderDrawColor(sdl.m_renderer, 0, g, b, 255);
         SDL_RenderFillRect(sdl.m_renderer, &temp);
+        
+        SDL_SetRenderDrawColor(sdl.m_renderer, 255, 0, 0, 255);
+        
+        // x, y - x, y
+        
+        
+        SDL_RenderDrawLine(sdl.m_renderer, 20, sdl.m_renderer_height - 20, 20, 500); // left
+        SDL_RenderDrawLine(sdl.m_renderer, sdl.m_renderer_width - 20, sdl.m_renderer_height - 20, sdl.m_renderer_width - 20, 500); // right
+        SDL_RenderDrawLine(sdl.m_renderer, 20, sdl.m_renderer_height - 20, sdl.m_renderer_width - 20, sdl.m_renderer_height - 20); // bottom
+        
     }
 }
 
 //------------------------------------------------------------
 void
 draw_selected() {
+    /*
     begin_draw();
     {
         draw_all_bars();
@@ -153,6 +164,38 @@ draw_selected() {
         }
     }
     end_draw();
+     */
+}
+
+//----------------------
+void // TODO. can remove the ref args and just use the size_t
+update_and_draw() {
+/*
+    for (std::size_t i = 0; i < update_list.size(); i++) {
+        array[update_list[i]].last = array[update_list[i]].render;
+    }
+
+    double j = 0;
+    
+    while (update_list.size() > 0) {
+        j += 0.1;
+        
+        for (int i = 0; i < update_list.size(); i++) {
+            if (array[update_list[i]].render != array[update_list[i]].actual) {
+                array[update_list[i]].render = lerp(array[update_list[i]].last, array[update_list[i]].actual, clamp(j, 0.0, 1.0));
+            } else {
+                update_list.erase(update_list.begin() + i);
+                array[update_list[i]].last = array[update_list[i]].actual;
+            }
+        }
+        
+        begin_draw();
+        {
+            draw_all_bars();
+        }
+        end_draw();
+    }
+    */
 }
 
 //----------------------
@@ -172,7 +215,7 @@ swap(T &a, T &b, std::size_t a_index, std::size_t b_index) {
     double j = 0;
     
     while (update_list.size() > 0) {
-        j += 0.02;
+        j += 0.05;
         
         for (int i = 0; i < update_list.size(); i++) {
           if (array[update_list[i]].render != array[update_list[i]].actual) {
@@ -184,10 +227,12 @@ swap(T &a, T &b, std::size_t a_index, std::size_t b_index) {
         }
 
         
+        
         begin_draw();
         {
             draw_all_bars();
             
+            /*
             SDL_Rect selection_a;
             SDL_Rect selection_b;
             
@@ -204,10 +249,12 @@ swap(T &a, T &b, std::size_t a_index, std::size_t b_index) {
             SDL_SetRenderDrawColor(sdl.m_renderer, 0, 255, 0, 255);
             SDL_RenderDrawRect(sdl.m_renderer, &selection_a);
             SDL_RenderDrawRect(sdl.m_renderer, &selection_b);
+             */
         }
         end_draw();
     }
 }
+
 //----------------------
 template<std::size_t size>
 void
@@ -241,9 +288,7 @@ selection_sort(std::array<value<int>, size> &array) {
             select(lowest_index, 0, 255, 0);
             draw_selected();
             selected.clear();
-            std::this_thread::sleep_for(50ms);
         }
-        std::this_thread::sleep_for(200ms);
         swap(array[i].actual, array[lowest_index].actual, lowest_index, i);
     }
 }
@@ -286,30 +331,24 @@ bubble_sort(std::array<value<int>, size> &array) {
 void
 rand_morph() {
     for (int i = 0; i < size; i++) {
-        array[i].actual = (rand() % (sdl.m_renderer_height - (sdl.m_renderer_height / 5)));
-        update_list.push_back(i);
+        array[i].actual = (rand() % 700);
     }
     
-    double j = 0;
-    
-    while (update_list.size() > 0) {
-        j += 0.01;
-    
-        for (int i = 0; i < update_list.size(); i++) {
-            if (array[update_list[i]].render != array[update_list[i]].actual) {
-                array[update_list[i]].render = lerp(array[update_list[i]].last, array[update_list[i]].actual, clamp(j, 0.0, 1.0));
+    for (int i = 0; i < array.size(); i++) {
+         double j = 0;
+        for (;;) {
+            j += 0.1;
+            if (array[i].render != array[i].actual) {
+                array[i].render = lerp(array[i].last, array[i].actual, clamp(j, 0.0, 1.0));
             } else {
-                update_list.erase(update_list.begin() + i);
-                array[update_list[i]].last = array[update_list[i]].actual;
+                array[i].last = array[i].actual;
+                break;
             }
+            begin_draw();
+            draw_all_bars();
+            end_draw();
         }
-        
-        begin_draw();
-        draw_all_bars();
-        end_draw();
-        std::this_thread::sleep_for(20ms);
     }
-    std::this_thread::sleep_for(2s);
 }
 
 //----------------------
@@ -322,6 +361,13 @@ merge(std::array<T, size> &array, decltype(size) left, decltype(size) middle, de
     
     std::vector<T> left_array(n1);
     std::vector<T> right_array(n2);
+    
+    select(left, 0, 255, 0);
+    select(middle, 0, 255, 0);
+    select(right, 0, 255, 0);
+    draw_selected();
+    selected.clear();
+    std::this_thread::sleep_for(100ms);
     
     for (decltype(n1) i = 0; i < n1; i++) {
         left_array[i] = array[left + i];
@@ -336,37 +382,32 @@ merge(std::array<T, size> &array, decltype(size) left, decltype(size) middle, de
     while (i < n1 && j < n2) {
         
         if (left_array[i].actual <= right_array[j].actual) {
-            array[k] = left_array[i];
+            array[k].actual = left_array[i].actual;
+            update_list.push_back(k);
             i++;
         } else {
-            array[k] = right_array[j];
+            array[k].actual = right_array[j].actual;
+            update_list.push_back(k);
             j++;
         }
         ++k;
-        begin_draw();
-        draw_all_bars();
-        end_draw();
-        std::this_thread::sleep_for(50ms);
+        update_and_draw();
     }
     
     while (i < n1) {
-        array[k] = left_array[i];
+        array[k].actual = left_array[i].actual;
+        update_list.push_back(k);
         i++;
         k++;
-        begin_draw();
-        draw_all_bars();
-        end_draw();
-        std::this_thread::sleep_for(50ms);
+        update_and_draw();
     }
     
     while (j < n2) {
-        array[k] = right_array[j];
+        array[k].actual = right_array[j].actual;
+        update_list.push_back(k);
         j++;
         k++;
-        begin_draw();
-        draw_all_bars();
-        end_draw();
-        std::this_thread::sleep_for(50ms);
+        update_and_draw();
     }
 }
 
@@ -399,24 +440,37 @@ main() {
     
     srand(time(NULL));
     
-    rect.y = sdl.m_renderer_height;
-    rect.w = (float)sdl.m_renderer_width / (float)size;
+ 
+    
+    // left red
+    int x = 20;
+    int x2 = sdl.m_renderer_width - 20;
+    int rangex = x2 - x;
+    
+    rect.y = sdl.m_renderer_height - 20;
+    rect.w = (float)rangex / (float)size;
+    std::cout << sdl.m_renderer_width << std::endl;
+    std::cout << rangex << std::endl;
+    std::cout << rect.w << std::endl;
+    rect.w +=1;
+    
 
     // show a blank screen for a while
     
     begin_draw();
     
     for (auto &i : array) {
-        i.render = sdl.m_renderer_height;
-        i.actual = sdl.m_renderer_height;
-        i.last = sdl.m_renderer_height;
+        i.render = 0;
+        i.actual = 0;
+        i.last = 0;
     }
     draw_all_bars();
     end_draw();
     std::this_thread::sleep_for(3s);
     
-    rand_morph();
-    merge_sort(array);
+    //rand_morph();
+    //merge_sort(array);
+    //std::this_thread::sleep_for(2s);
     rand_morph();
     selection_sort(array);
     std::this_thread::sleep_for(2s);
