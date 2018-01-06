@@ -16,12 +16,25 @@ using namespace std::chrono_literals;
 
 constexpr auto width = 1000;
 constexpr auto height = 600;
-constexpr std::size_t size = 20;
+constexpr std::size_t size = 100;
 
 sdl_module sdl("sdl_module", width, height);
 
+struct selection {
+    selection(std::size_t selected, int r, int g, int b)
+    :   selected{selected}
+    ,   r{r}
+    ,   g{g}
+    ,   b{b}{}
+    
+    std::size_t selected;
+    int r;
+    int g;
+    int b;
+};
+
 std::vector<std::size_t> update_list;
-std::vector<std::size_t> selected;
+std::vector<selection> selected;
 SDL_Rect rect;
 
 //----------------------
@@ -80,8 +93,8 @@ lerp(T v0, T v1, double t) {
 
 //------------------------------------------------------------
 void
-select(std::size_t i) {
-    selected.push_back(i);
+select(std::size_t i, int r, int g, int b) {
+    selected.emplace_back(i, r, g, b);
 }
 
 //------------------------------------------------------------
@@ -101,18 +114,24 @@ end_draw() {
 void
 draw_all_bars() {
     for (int i = 0; i < size; i++) {
-        rect.x = i * rect.w;
+        rect.x = (i * rect.w) + 1;
         rect.h = -array[i].render;
-   
+        
+        SDL_Rect temp = rect;
+        temp.w -= 1;
+   /*
         float mini = 0, maxi = sdl.m_renderer_height;
         float ratio = 2 * (array[i].render - mini) / (maxi - mini);
         int b = (int)std::max(0.0, 255.0 * (1.0 - ratio));
         int r = (int)std::max(0.0, 255.0 * (ratio - 1.0));
         int g = 255 - b - r;
-        
+        */
+        unsigned int r = map((unsigned int)rect.h, (unsigned int)0, (unsigned int)sdl.m_renderer_height, (unsigned int)100, (unsigned int)255);
+        unsigned int b = map((unsigned int)i, (unsigned int)0, (unsigned int)size, (unsigned int)150, (unsigned int)255);
+        unsigned int g = 0;
 
-        SDL_SetRenderDrawColor(sdl.m_renderer, g, b, r, 255);
-        SDL_RenderFillRect(sdl.m_renderer, &rect);
+        SDL_SetRenderDrawColor(sdl.m_renderer, 0, g, b, 255);
+        SDL_RenderFillRect(sdl.m_renderer, &temp);
     }
 }
 
@@ -123,16 +142,17 @@ draw_selected() {
     {
         draw_all_bars();
         
+        SDL_Rect temp = rect;
+       // temp.w -= 1;
+        
         for (auto& i : selected) {
-            rect.x = i * rect.w;
-            rect.h = -array[i].render;
-            SDL_SetRenderDrawColor(sdl.m_renderer, 255, 0, 255, 255);
-            SDL_RenderDrawRect(sdl.m_renderer, &rect);
+            temp.x = i.selected * rect.w;
+            temp.h = -array[i.selected].render;
+            SDL_SetRenderDrawColor(sdl.m_renderer, i.r, i.g, i.b, 255);
+            SDL_RenderDrawRect(sdl.m_renderer, &temp);
         }
     }
     end_draw();
-    
-    //selected.clear();
 }
 
 //----------------------
@@ -152,7 +172,7 @@ swap(T &a, T &b, std::size_t a_index, std::size_t b_index) {
     double j = 0;
     
     while (update_list.size() > 0) {
-        j += 0.01;
+        j += 0.02;
         
         for (int i = 0; i < update_list.size(); i++) {
           if (array[update_list[i]].render != array[update_list[i]].actual) {
@@ -211,24 +231,19 @@ selection_sort(std::array<value<int>, size> &array) {
         
         decltype(size) lowest_index = i;
         
-        select(i);
-        
         for (decltype(size) j = i + 1; j < size; ++j) {
-            select(j);
-            
             if (array[lowest_index].actual > array[j].actual) {
                 lowest_index = j;
-                select(lowest_index);
             }
+            
+            select(i, 0, 255, 0);
+            select(j, 255, 0, 0);
+            select(lowest_index, 0, 255, 0);
             draw_selected();
             selected.clear();
-            select(i);
-            select(lowest_index);
-            //std::this_thread::sleep_for(10ms);
-            
-            // maybe draw something here so we can visualise the search?
+            std::this_thread::sleep_for(50ms);
         }
-       // std::this_thread::sleep_for(200ms);
+        std::this_thread::sleep_for(200ms);
         swap(array[i].actual, array[lowest_index].actual, lowest_index, i);
     }
 }
@@ -270,9 +285,8 @@ bubble_sort(std::array<value<int>, size> &array) {
 //----------------------
 void
 rand_morph() {
-    // set all to the same value
     for (int i = 0; i < size; i++) {
-        array[i].actual = (rand() % sdl.m_renderer_height);
+        array[i].actual = (rand() % (sdl.m_renderer_height - (sdl.m_renderer_height / 5)));
         update_list.push_back(i);
     }
     
@@ -293,6 +307,7 @@ rand_morph() {
         begin_draw();
         draw_all_bars();
         end_draw();
+        std::this_thread::sleep_for(20ms);
     }
     std::this_thread::sleep_for(2s);
 }
