@@ -335,7 +335,7 @@ merge(std::array<T, size> &array, decltype(size) left, decltype(size) middle, de
     
     while (i < n1 && j < n2) {
         
-        if (left_array[i] <= right_array[j]) {
+        if (left_array[i].actual <= right_array[j].actual) {
             array[k] = left_array[i];
             i++;
         } else {
@@ -343,18 +343,30 @@ merge(std::array<T, size> &array, decltype(size) left, decltype(size) middle, de
             j++;
         }
         ++k;
+        begin_draw();
+        draw_all_bars();
+        end_draw();
+        std::this_thread::sleep_for(50ms);
     }
     
     while (i < n1) {
         array[k] = left_array[i];
         i++;
         k++;
+        begin_draw();
+        draw_all_bars();
+        end_draw();
+        std::this_thread::sleep_for(50ms);
     }
     
     while (j < n2) {
         array[k] = right_array[j];
         j++;
         k++;
+        begin_draw();
+        draw_all_bars();
+        end_draw();
+        std::this_thread::sleep_for(50ms);
     }
 }
 
@@ -403,7 +415,8 @@ main() {
     end_draw();
     std::this_thread::sleep_for(3s);
     
-    
+    rand_morph();
+    merge_sort(array);
     rand_morph();
     selection_sort(array);
     std::this_thread::sleep_for(2s);
